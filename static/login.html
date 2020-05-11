@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Login</title>
+
+        <script>
+            fetch("/api/get_profile", {
+                method: "POST"
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.success) window.location.pathname = "/"
+                })
+
+            document.addEventListener("DOMContentLoaded", () => {
+                document
+                    .getElementById("form")
+                    .addEventListener("submit", (event) => {
+                        event.preventDefault()
+
+                        let name = event.target.name.value,
+                            password = event.target.password.value
+
+                        fetch("/login", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/x-www-form-urlencoded"
+                            },
+                            body: `name=${name}&password=${password}`
+                        })
+                            .then((res) => res.json())
+                            .then((data) => {
+                                if (data.success) window.location.pathname = "/"
+                            })
+                    })
+            })
+        </script>
+    </head>
+    <body>
+        <form id="form" action="/login" method="POST">
+            <input type="text" name="name" placeholder="username" />
+            <input type="password" name="password" placeholder="username" />
+            <button>Login</button>
+        </form>
+    </body>
+</html>

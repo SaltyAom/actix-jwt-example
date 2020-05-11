@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Profile</title>
+        <script>
+            fetch("/api/get_profile", {
+                method: "POST"
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (!data.success) window.location.pathname = "/login"
+
+                    let updatePage = () => {
+                        let { username } = data.payload
+
+                        document.getElementById("username").innerText = username
+                    }
+
+                    if (
+                        document.readyState === "complete" ||
+                        document.readyState === "loaded" ||
+                        document.readyState === "interactive"
+                    )
+                        return updatePage()
+
+                    return document.addEventListener("DOMContentLoaded", () =>
+                        updatePage()
+                    )
+                })
+                .catch(() => {
+                    window.location.pathname = "/login"
+                })
+        </script>
+    </head>
+    <body>
+        <h1>Username: <span id="username">Loading...</span></h1>
+    </body>
+</html>
