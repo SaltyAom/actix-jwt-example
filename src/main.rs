@@ -1,7 +1,7 @@
 use std::io;
-
-use actix_web::{ HttpServer, App };
 use dotenv::dotenv;
+
+use actix_web::{ HttpServer, App, middleware };
 
 mod route;
 mod libs;
@@ -12,6 +12,9 @@ async fn main() -> io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .wrap(
+                middleware::Compress::default()
+            )
             .service(route::html::index)
             .service(route::html::login)
             .service(route::api::login)

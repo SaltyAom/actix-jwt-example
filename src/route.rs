@@ -93,18 +93,18 @@ pub mod api {
             )
     }
 
+    const LOGOUT_MESSAGE: &'static str = "{{
+        \"success\": true,
+        \"message\": \"Successfully Logout\"
+    }}";
+
     #[get("/logout")]
     pub async fn logout(req: HttpRequest) -> HttpResponse {
-        const LOGOUT_MESSAGE: &'static str = "{{
-            \"success\": true,
-            \"message\": \"Successfully Logout\"
-        }}";    
-
         if req.cookie("authToken").is_none() {
             return HttpResponse::Ok()
                 .content_type("application/json")
                 .body(
-                    format!("{}", LOGOUT_MESSAGE)
+                    format!("{}", &LOGOUT_MESSAGE)
                 )
         }
 
@@ -112,22 +112,32 @@ pub mod api {
             .content_type("application/json")
             .del_cookie(&req.cookie("authToken").unwrap())
             .body(
-                format!("{}", LOGOUT_MESSAGE)
+                format!("{}", &LOGOUT_MESSAGE)
             )
     }
 }
 
 pub mod html {
-    use actix_web::{ Result, get };
-    use actix_files::{ NamedFile };
+    use actix_web::{ get, HttpResponse };
+
+    const INDEX_PAGE: &'static str = &include_str!("../static/index.html");
+    const LOGIN_PAGE: &'static str = &include_str!("../static/login.html");
 
     #[get("/")]
-    pub async fn index() -> Result<NamedFile> {
-        Ok(NamedFile::open("static/index.html")?)
+    pub async fn index() -> HttpResponse {
+        HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(
+                format!("{}", &INDEX_PAGE)
+            )
     }
 
     #[get("/login")]
-    pub async fn login() -> Result<NamedFile> {
-        Ok(NamedFile::open("static/login.html")?)
+    pub async fn login() -> HttpResponse {
+        HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(
+                format!("{}", &LOGIN_PAGE)
+            )
     }
 }
