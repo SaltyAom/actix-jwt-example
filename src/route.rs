@@ -1,11 +1,13 @@
 pub mod api {
-    use actix_web::{ HttpResponse, get, post, web, cookie, HttpRequest };
+    use actix_web::{ HttpResponse, get, post, web, cookie, HttpRequest, HttpMessage };
     use serde::{ Serialize, Deserialize };
 
     use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation};
     use jsonwebtoken::errors::ErrorKind;
 
-    use crate::libs::{ get_time, get_cookie };
+    use std::env;
+
+    use crate::libs::{ get_time };
 
     #[derive(Serialize, Deserialize)]
     pub struct AuthPayload {
@@ -31,7 +33,7 @@ pub mod api {
         let auth_token = match encode(
             &Header::default(), 
             &auth_payload, 
-            &EncodingKey::from_secret("Koisuru Fortune Cookie".as_ref())
+            &EncodingKey::from_secret(&env::var("jwt_secret").unwrap().as_ref())
         ) {
             Ok(value) => value,
             Err(_) => panic!()
@@ -54,13 +56,22 @@ pub mod api {
 
     #[post("/api/get_profile")]
     pub async fn get_profile(req: HttpRequest) -> HttpResponse {
-        let auth_token = get_cookie(req, "authToken");
+        if req.cookie("authToken").is_none() {
+            return HttpResponse::Ok()
+                .content_type("application/json")
+                .body(
+                    format!("{{
+                        \"success\": false,
+                        \"payload\": \"{{}}\"
+                    }}")
+                )
+        }
 
         let validation = Validation { sub: Some("authToken".to_owned()), ..Validation::default() };
 
         let auth_token = match decode::<AuthPayload>(
-            &auth_token,
-            &DecodingKey::from_secret("Koisuru Fortune Cookie".as_ref()), 
+            req.cookie("authToken").unwrap().value(),
+            &DecodingKey::from_secret(env::var("jwt_secret").unwrap().as_ref()), 
             &validation
         ) {
             Ok(c) => c,
@@ -83,20 +94,25 @@ pub mod api {
     }
 
     #[get("/logout")]
-    pub async fn logout() -> HttpResponse {
-        let auth_cookie = cookie::Cookie::build("authToken", "")
-            .path("/")
-            .http_only(true)
-            .finish();
+    pub async fn logout(req: HttpRequest) -> HttpResponse {
+        const LOGOUT_MESSAGE: &'static str = "{{
+            \"success\": true,
+            \"message\": \"Successfully Logout\"
+        }}";    
+
+        if req.cookie("authToken").is_none() {
+            return HttpResponse::Ok()
+                .content_type("application/json")
+                .body(
+                    format!("{}", LOGOUT_MESSAGE)
+                )
+        }
 
         HttpResponse::Ok()
             .content_type("application/json")
-            .del_cookie(&auth_cookie)
+            .del_cookie(&req.cookie("authToken").unwrap())
             .body(
-                format!("{{
-                    \"success\": true,
-                    \"message\": \"Successfully Logout\"
-                }}")
+                format!("{}", LOGOUT_MESSAGE)
             )
     }
 }

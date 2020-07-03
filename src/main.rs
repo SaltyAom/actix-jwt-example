@@ -1,12 +1,15 @@
-use std::{ io };
+use std::io;
 
 use actix_web::{ HttpServer, App };
+use dotenv::dotenv;
 
 mod route;
 mod libs;
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
+    dotenv().ok();
+
     HttpServer::new(|| {
         App::new()
             .service(route::html::index)
